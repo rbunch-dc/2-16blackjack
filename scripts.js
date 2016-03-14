@@ -4,6 +4,10 @@
 
 var theDeck = [];
 var placeInDeck = 0;
+var playerTotalCards = 2;
+var dealerTotalCards = 2;
+
+
 $(document).ready(function(){
 
 	$('button').click(function(){
@@ -39,6 +43,8 @@ function calculateTotal(hand, whosTurn){
 	for(i=0; i<hand.length; i++){
 		//Purposely NOT fixing 11, 12, or 13, or 1 =11
 		cardValue = Number(hand[i].slice(0,-1));
+		//check to see if the card is higher than 10
+
 		total += cardValue;
 	}
 	//update the HTML
@@ -46,14 +52,19 @@ function calculateTotal(hand, whosTurn){
 	$(idToGet).html(total);
 
 	//What if the total is over 21? This is a good place to check for bust.
+	if(total > 21){
+		bust(whosTurn);
+	}
+
+	return total;
 }
 
 function placeCard(card, who, slot){
 	var currId = '#' + who + '-card-' + slot;
 	$(currId).removeClass('empty');
 	if(card[1] == 'r' ){}
+		//check to see if the card is an 11. If it is, then change the 11 to J. If it's a 1, change it to A, etc.
 	$(currId).html(card);
-
 }
 
 
@@ -104,10 +115,72 @@ function shuffleDeck(){
 	}
 }
 
+function hit(){
+	var slot = '';
+	if(playerTotalCards == 2){ slot = "three"; }
+	else if(playerTotalCards == 3){ slot = "four"; }
+	else if(playerTotalCards == 4){ slot = "five"; }
+	else if(playerTotalCards == 5){ slot = "six"; }
+
+	placeCard(theDeck[placeInDeck], 'player', slot);
+	playerHand.push(theDeck[placeInDeck]);
+	calculateTotal(playerHand, 'player');
+	placeInDeck++;
+	playerTotalCards++;
+
+}
 
 
+function stand(){
+	//What happens to player? Nothing.
+	var	dealerTotal = $('.dealer-total').html();
+	while(dealerTotal < 17){
+		if(dealerTotalCards == 2){ slot = "three";}
+		else if(dealerTotalCards == 3){ slot = "four";}
+		else if(dealerTotalCards == 4){ slot = "five";}
+		else if(dealerTotalCards == 5){ slot = "six";}
+		placeCard(theDeck[placeInDeck], 'dealer', slot);
+		dealerHand.push(theDeck[placeInDeck]);
+		dealerTotalCards++;
+		placeInDeck++;
+		calculateTotal(dealerHand, 'dealer');
+		dealerTotal = $('.dealer-total').html();
+	}
 
+	//We now know the dealer has at least 17. Check to see who is higher...
+	checkWin();
+}
 
+function checkWin(){
+	var playerHas = Number($('.player-total').html());
+	var dealerHas = Number($('.dealer-total').html());
+	if(dealerHas > 21){
+		//The dealer has busted
+		bust('dealer');
+	}else{
+		//Neither player has busted and the dealer has at least 17
+		if(playerHas > dealerHas){
+			//Player won
+			$('#message').html('You have beaten the dealer!');
+		}else if(dealerHas > playerHas){
+			//Dealer won
+			$('#message').html('Sorry, the dealer has beaten you.');
+		}else{
+			//tie
+			$('#message').html('It\'s a push!!');
+		}
+	}
+}
+
+function bust(who){
+	console.log(who);
+	if(who === 'player'){
+		$('#message').html('You have busted!');
+	}else{
+		//it has to be the dealer
+		$('#message').html('The dealer has busted!');
+	}
+}
 
 
 
